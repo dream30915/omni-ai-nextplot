@@ -1,4 +1,4 @@
-# === AUTO DEPLOY SETUP FOR NEXTPLOT LINEBOT ===
+# === OMNI-AI FULL AUTO DEPLOY FOR NEXTPLOT LINEBOT ===
 $ErrorActionPreference = "Stop"
 
 $Repo = "https://github.com/dream30915/omni-ai-nextplot.git"
@@ -9,14 +9,14 @@ Set-Location $Temp
 
 Write-Host "🌐 Cloning repository..."
 git clone $Repo .
-git checkout -b autodeploy-setup
+git checkout -b autodeploy-fix
 
-# === 1. สร้างโฟลเดอร์ ===
+# === 1. โฟลเดอร์ระบบ CI/CD ===
 New-Item -ItemType Directory -Force -Path ".github\workflows" | Out-Null
 New-Item -ItemType Directory -Force -Path "scripts" | Out-Null
 New-Item -ItemType Directory -Force -Path ".git\hooks" | Out-Null
 
-# === 2. เขียนไฟล์ workflow ===
+# === 2. Workflow Deploy ===
 $Workflow = @'
 name: 🚀 Deploy NextPlot LineBot (Full Auto CI/CD)
 
@@ -97,13 +97,16 @@ $Hook = @'
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$CURRENT_BRANCH" = "main" ]; then
   pwsh -NoProfile -ExecutionPolicy Bypass -File "scripts/push-auto-tag.ps1"
+else
+  echo "[Auto-Tag] Skip: Not on main branch ($CURRENT_BRANCH)"
 fi
 '@
 Set-Content ".git\hooks\post-push" $Hook -Encoding UTF8
 
-# === 5. Commit + push ===
+# === 5. Commit & Push ===
 git add .
-git commit -m "Auto setup full CI/CD system"
-git push origin autodeploy-setup
+git commit -m "chore(ci): fix & finalize full auto-deploy (Cloud Run + LINE Notify)"
+git push origin autodeploy-fix
 
-Write-Host "✅ Auto setup branch created and pushed to GitHub!"
+Write-Host "`n✅ พร้อมใช้งาน! Branch 'autodeploy-fix' ถูก push ขึ้น GitHub แล้ว"
+Write-Host "👉 ตรวจดู workflow ได้ที่: https://github.com/dream30915/omni-ai-nextplot/actions"
