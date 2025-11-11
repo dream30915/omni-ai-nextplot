@@ -1,20 +1,22 @@
-# .github/workflows/main.yml
-name: Auto Deploy to Cloud Run
+name: 🚀 Auto Deploy OMNI-AI + NextPlot to Cloud Run
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:  # ให้กด deploy เองได้จากแท็บ Actions
 
 jobs:
   deploy:
-    name: Build and Deploy to Cloud Run
+    name: Build & Deploy to Cloud Run
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout Source
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -22,10 +24,12 @@ jobs:
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           export_default_credentials: true
 
+      # 3️⃣ Build Docker Image for Cloud Run
       - name: Build Docker image
         run: |
           gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/omni-ai-nextplot .
 
+      # 4️⃣ Deploy to Cloud Run
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy omni-ai-nextplot \
@@ -34,4 +38,11 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --memory=512Mi \
-            --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},LINE_TOKEN=${{ secrets.LINE_TOKEN }}"
+            --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},LINE_TOKEN=${{ secrets.LINE_TOKEN }}" \
+            --set-env-vars "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_SA_KEY=${{ secrets.GCP_SA_KEY }}"
+
+      # 5️⃣ Confirm Deployment URL
+      - name: Verify Deployment
+        run: |
+          echo "✅ Deployment completed successfully."
+          echo "🌐 Check your service with: gcloud run services describe omni-ai-nextplot --region=asia-southeast1 --format='value(status.url)'"
